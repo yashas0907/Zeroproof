@@ -1,7 +1,7 @@
 import { useState, useEffect } from "react";
 import { useParams } from "react-router-dom";
 
-const API = import.meta.env.VITE_API_URL || "http://localhost:3000";
+import { API_URL as API } from "../config";
 
 export default function PublicVerify() {
   const { token } = useParams();

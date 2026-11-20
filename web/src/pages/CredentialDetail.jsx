@@ -1,7 +1,7 @@
 import { useState, useEffect, useCallback } from "react";
 import { useParams, useNavigate } from "react-router-dom";
 
-const API = import.meta.env.VITE_API_URL || "http://localhost:3000";
+import { API_URL as API } from "../config";
 
 export default function CredentialDetail() {
   const { id } = useParams();

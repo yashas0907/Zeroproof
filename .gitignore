@@ -57,3 +57,6 @@ coverage/
 .venv*/
 *.key
 backend/target/
+
+# Local preview launcher (machine-specific paths)
+.claude/launch.json

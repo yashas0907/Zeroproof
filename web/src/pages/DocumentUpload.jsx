@@ -2,7 +2,7 @@ import { useState } from "react";
 import { useNavigate } from "react-router-dom";
 import FileDropzone from "../components/FileDropzone";
 
-const API = import.meta.env.VITE_API_URL || "http://localhost:3000";
+import { API_URL as API } from "../config";
 
 export default function DocumentUpload() {
   const navigate = useNavigate();

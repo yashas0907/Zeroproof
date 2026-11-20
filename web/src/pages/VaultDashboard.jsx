@@ -2,7 +2,7 @@ import { useState, useEffect } from "react";
 import { Link } from "react-router-dom";
 import CredentialCard from "../components/CredentialCard";
 
-const API = import.meta.env.VITE_API_URL || "http://localhost:3000";
+import { API_URL as API } from "../config";
 
 export default function VaultDashboard() {
   const [documents, setDocuments] = useState([]);

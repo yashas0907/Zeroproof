@@ -29,6 +29,12 @@ public class DocumentEntity {
     private String vaultPath;
     private String status = "active";
     private Instant createdAt;
+    /** Non-null for records imported from the legacy Node data files. */
+    @Column(length = 500)
+    private String importNote;
+
+    public String getImportNote() { return importNote; }
+    public void setImportNote(String v) { this.importNote = v; }
 
     public String getId() { return id; }
     public void setId(String id) { this.id = id; }

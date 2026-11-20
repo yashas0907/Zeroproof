@@ -104,13 +104,38 @@ public class DocumentService {
                 .orElseThrow(() -> ApiException.notFound("DOCUMENT_NOT_FOUND", "Document not found"));
     }
 
+    /** Decrypts and returns the original document bytes (local owner access only; never via share links). */
+    public byte[] readDecrypted(DocumentEntity d) {
+        Path file = d.getVaultPath() == null ? null : Path.of(d.getVaultPath());
+        if (file == null || !Files.isRegularFile(file)) {
+            throw new ApiException(410, "DOCUMENT_FILE_MISSING", "The encrypted file for this document is not available");
+        }
+        byte[] plain;
+        try {
+            plain = crypto.decrypt(Files.readAllBytes(file));
+        } catch (java.security.GeneralSecurityException e) {
+            throw new ApiException(409, "DOCUMENT_UNREADABLE",
+                    "The document cannot be decrypted with the configured key (it may have been encrypted with a different key)");
+        } catch (IOException e) {
+            throw new ApiException(500, "STORAGE_ERROR", "Could not read the document");
+        }
+        if (!Hashing.sha256Hex(plain).equals(d.getDocumentHash())) {
+            throw new ApiException(409, "DOCUMENT_INTEGRITY_ERROR", "Decrypted document does not match its stored hash");
+        }
+        return plain;
+    }
+
     public void delete(String id) {
         DocumentEntity d = get(id);
         d.setStatus("deleted");
         docs.save(d);
         try {
+            // Only ciphertext written by this backend is removed; imported legacy vault files are never touched.
             if (d.getVaultPath() != null) {
-                Files.deleteIfExists(Path.of(d.getVaultPath()));
+                Path file = Path.of(d.getVaultPath()).toAbsolutePath().normalize();
+                if (file.startsWith(vaultDir.toAbsolutePath().normalize())) {
+                    Files.deleteIfExists(file);
+                }
             }
         } catch (IOException ignored) {
             // metadata is already marked deleted; the orphaned ciphertext is harmless

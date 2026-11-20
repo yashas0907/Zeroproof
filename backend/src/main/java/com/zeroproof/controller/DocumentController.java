@@ -68,9 +68,29 @@ public class DocumentController {
 
     @GetMapping("/{id}")
     public ResponseEntity<Map<String, Object>> get(@PathVariable String id) {
-        Map<String, Object> d = summary(documents.get(id));
-        d.put("encryptionAlgorithm", documents.get(id).getEncryptionAlgorithm());
+        DocumentEntity entity = documents.get(id);
+        Map<String, Object> d = summary(entity);
+        d.put("encryptionAlgorithm", entity.getEncryptionAlgorithm());
         return ApiResponse.ok(Map.of("document", d), "v3");
+    }
+
+    @GetMapping("/{id}/file")
+    public ResponseEntity<byte[]> file(@PathVariable String id) {
+        DocumentEntity d = documents.get(id);
+        byte[] plain = documents.readDecrypted(d);
+        MediaType type;
+        try {
+            type = MediaType.parseMediaType(d.getMimeType());
+        } catch (RuntimeException e) {
+            type = MediaType.APPLICATION_OCTET_STREAM;
+        }
+        String name = d.getOriginalName() == null ? "document" : d.getOriginalName().replaceAll("[^A-Za-z0-9._-]", "_");
+        return ResponseEntity.ok()
+                .contentType(type)
+                .header("Content-Disposition", "attachment; filename=\"" + name + "\"")
+                .header("X-Content-Type-Options", "nosniff")
+                .header("Cache-Control", "no-store")
+                .body(plain);
     }
 
     @DeleteMapping("/{id}")

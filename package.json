@@ -1,43 +1,20 @@
 {
-  "name": "aegisid",
-  "version": "2.0.0",
-  "description": "Zero-Knowledge Identity Verification Protocol — prove who you are, reveal nothing.",
-  "main": "api/server.js",
+  "name": "zeroproof-zkp-tooling",
+  "version": "3.0.0",
+  "private": true,
+  "description": "Circom/snarkjs tooling for ZeroProof. The application backend is the Java Spring Boot service in backend/.",
   "scripts": {
-    "start": "node api/server.js",
-    "dev": "node api/server.js",
-    "test": "node tests/api.test.js",
-    "test:api": "node tests/api.test.js",
+    "compile": "powershell -File scripts/compile.ps1",
     "web": "cd web && npm run dev",
-    "web:build": "cd web && npm run build",
-    "compile": "powershell -File scripts/compile.ps1"
+    "web:build": "cd web && npm run build"
   },
-  "keywords": [
-    "zero-knowledge",
-    "zkp",
-    "plonk",
-    "snarkjs",
-    "circom",
-    "identity",
-    "verification",
-    "privacy",
-    "web3"
-  ],
-  "author": "AegisID",
   "license": "MIT",
-  "type": "commonjs",
+  "dependencies": {
+    "circomlib": "^2.0.5",
+    "ffjavascript": "^0.3.1",
+    "snarkjs": "^0.7.6"
+  },
   "engines": {
     "node": ">=18.0.0"
-  },
-  "dependencies": {
-    "@aws-sdk/client-dynamodb": "^3.1048.0",
-    "@aws-sdk/client-s3": "^3.1048.0",
-    "circomlib": "^2.0.5",
-    "cors": "^2.8.6",
-    "express": "^5.2.1",
-    "multer": "^2.1.1",
-    "pdf-parse": "^2.4.5",
-    "snarkjs": "^0.7.6",
-    "tesseract.js": "^7.0.0"
   }
 }

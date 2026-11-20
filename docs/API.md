@@ -1,135 +1,19 @@
-# AegisID — API Documentation v3.0
+# API
 
-**Base URL**: `http://localhost:3000`
+All responses use the envelope `{ status, data, meta, error }`. Errors carry `error.code` and `error.message`.
 
-## Versions
-- **v1**: ZK Proof Demo (Public)
-- **v2**: JWT Protected strict verification
-- **v3**: Document Vault & Credential Issuance (New)
+| Method & path | Purpose | Notable errors |
+|---|---|---|
+| `GET /health`, `GET /` | Health / info | |
+| `GET /v1/proof-types` | Supported circuits and their public-signal order | |
+| `POST /v1/verify` | Verify `{ proof, publicSignals, proofType? }` (`age_check` default, or `range_check`) and consume the nullifier | 400 `VALIDATION_ERROR`, 400 `INVALID_PROOF`, 409 `NULLIFIER_REPLAYED` |
+| `POST /v3/documents/upload` | Multipart field `document` (image/PDF, ≤10 MB; optional `fullName`, `dateOfBirth`, `documentType`). Hashes, encrypts, extracts name/DOB | 400 `NO_FILE`/`INVALID_FILE_TYPE`, 413 |
+| `GET /v3/documents`, `GET /v3/documents/{id}`, `DELETE /v3/documents/{id}` | Metadata only | 404 `DOCUMENT_NOT_FOUND` |
+| `POST /v3/credentials/issue` | `{ documentId, overrides?: { fullName, dateOfBirth, documentType } }` → generates and verifies an `age_check` proof | 400/404, 502 `ZKP_FAILED` |
+| `GET /v3/credentials`, `GET /v3/credentials/{id}` | List / detail (+ active share links) | 404 |
+| `DELETE /v3/credentials/{id}` | Revoke a credential | 404 |
+| `POST /v3/credentials/{id}/share` | `{ expiresInHours?, organizationName? }` → share token | 409 `CREDENTIAL_INACTIVE` |
+| `DELETE /v3/credentials/{id}/share` | `{ token }` revoke a link owned by this credential | 404 `SHARE_NOT_FOUND` |
+| `GET /v3/verify/{token}` | Public verification | 404 `INVALID_SHARE_LINK` (unknown/expired/revoked), 410 `CREDENTIAL_REVOKED`/`CREDENTIAL_EXPIRED`, 422 `INVALID_PROOF`/`PROOF_MISMATCH`/`NO_PROOF`, 409 `NULLIFIER_MISMATCH` |
 
----
-
-## v3 Endpoints (Document Vault)
-
-### `POST /v3/documents/upload`
-Upload an identity document and extract attributes. The document is encrypted with AES-256-GCM before storage.
-
-**Form Data**:
-- `document`: File blob (PDF, JPEG, PNG, WebP)
-- `fullName`: string
-- `dateOfBirth`: string (ISO date)
-- `documentType`: string (id_card, passport, etc.)
-
-**Response**:
-```json
-{
-  "status": "success",
-  "data": {
-    "document": {
-      "id": "uuid",
-      "originalName": "id.jpg",
-      "documentHash": "sha256-hash",
-      "createdAt": "2026-05-13T12:00:00Z"
-    }
-  }
-}
-```
-
----
-
-### `POST /v3/credentials/issue`
-Issue a ZK credential bound to an uploaded document.
-
-**Request Body**:
-```json
-{
-  "documentId": "uuid",
-  "credentialType": "age_verification"
-}
-```
-
-**Response**:
-```json
-{
-  "status": "success",
-  "data": {
-    "credential": {
-      "id": "uuid",
-      "isEligible": true,
-      "zkProof": { "verified": true, "circuit": "age_check_v2" },
-      "issuedAt": "..."
-    }
-  }
-}
-```
-
----
-
-### `POST /v3/credentials/:id/share`
-Generate a shareable verification link.
-
-**Request Body**:
-```json
-{
-  "organizationName": "Bar Tavern",
-  "expiresInHours": 72
-}
-```
-
-**Response**:
-```json
-{
-  "status": "success",
-  "data": {
-    "shareLink": {
-      "token": "base64url-token",
-      "verifyUrl": "/verify/base64url-token",
-      "expiresAt": "..."
-    }
-  }
-}
-```
-
----
-
-### `GET /v3/verify/:token`
-Public verification endpoint for organizations. **No authentication required.**
-Returns only ZK-safe information.
-
-**Response**:
-```json
-{
-  "status": "success",
-  "data": {
-    "verification": {
-      "status": "verified",
-      "credentialType": "age_verification",
-      "isEligible": true,
-      "zkProof": { "verified": true, "proofSystem": "PLONK" },
-      "documentBinding": { "documentHashPrefix": "abc123de..." },
-      "sharedWith": "Bar Tavern"
-    }
-  }
-}
-```
-
----
-
-## v1 & v2 Endpoints
-(Retained for backward compatibility. See legacy docs for details.)
-- `POST /v1/verify`: Proof demo
-- `POST /v2/verify`: Strict verification 🔒
-- `GET /v2/audit/:nullifier`: Nullifier check 🔒
-
----
-
-## Error Response Format
-
-All errors follow this structure:
-```json
-{
-  "status": "error",
-  "error": { "code": "ERROR_CODE", "message": "Human-readable message" }
-}
-```
-
+Removed from the legacy Node API: `POST /v2/verify`, `GET /v2/audit/:nullifier` (unused; `/v1/verify` now requires a non-zero nullifier) and JWT authentication (disabled by default and only guarded v2).
